@@ -4,15 +4,21 @@ using UnityEngine;
 
 public class TrainController : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [Header("Data")]
+    public string trainId;
+    public TrainData data;
+    
+    [Header("Movement")]
+    public Transform currentTarget;
+    public float moveSpeed = 5f;
+    public bool isMoving = false;
+    
+    [Header("Visual")]
+    public Renderer trainRenderer;
+    
+    public void Initialize(TrainData trainData) { }
+    public void MoveTo(Vector3 targetPosition) { }
+    public void Stop() { }
+    public void UpdateMovement(float deltaTime) { }
+    public void OnTrainClicked() { }
 }

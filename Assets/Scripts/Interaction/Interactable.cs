@@ -2,17 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Interactable : MonoBehaviour
+public interface IInteractable
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    void OnSelected();
+    void OnDeselected();
+    void OnAction();
+    string GetInteractionInfo();
+}
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+public class Interactable : MonoBehaviour, IInteractable
+{
+    public string objectName;
+    public string objectType; // "Station", "Train", "Line"
+    
+    public virtual void OnSelected() { }
+    public virtual void OnDeselected() { }
+    public virtual void OnAction() { }
+    public virtual string GetInteractionInfo() { return objectName; }
 }

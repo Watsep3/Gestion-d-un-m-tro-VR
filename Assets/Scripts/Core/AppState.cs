@@ -1,18 +1,59 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class AppState : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+// ============================================
+// ENUMS GLOBAUX DU SYSTÈME
+// ============================================
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+/// <summary>
+/// États de l'application
+/// </summary>
+public enum AppState
+{
+    Initializing,
+    Running,
+    Paused,
+    GameOver
+}
+
+/// <summary>
+/// États possibles d'une station
+/// </summary>
+public enum StationStatus
+{
+    Normal,
+    Delayed,
+    Broken
+}
+
+/// <summary>
+/// États possibles d'un train
+/// </summary>
+public enum TrainStatus
+{
+    Moving,
+    Stopped,
+    Maintenance
+}
+
+/// <summary>
+/// États possibles d'une ligne
+/// </summary>
+public enum LineStatus
+{
+    Active,
+    Delayed,
+    Closed
+}
+
+/// <summary>
+/// Types d'incidents possibles
+/// </summary>
+public enum IncidentType
+{
+    StationBreakdown,      // Panne de station
+    TrainMalfunction,      // Train en panne
+    LineDelay,             // Retard sur ligne
+    Overcrowding,          // Surcharge passagers
+    SignalFailure,         // Panne de signalisation
+    TrackMaintenance       // Maintenance voie
 }

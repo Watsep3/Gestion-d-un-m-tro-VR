@@ -4,15 +4,25 @@ using UnityEngine;
 
 public class InteractionManager : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [Header("Camera")]
+    public Camera mainCamera;
+    
+    [Header("Selection")]
+    public GameObject currentSelection;
+    public LayerMask interactableLayer;
+    
+    [Header("Input")]
+    public KeyCode selectKey = KeyCode.Mouse0;
+    public KeyCode actionKey = KeyCode.E;
+    
+    private void Update() 
     {
-        
+        HandleInput();
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    
+    private void HandleInput() { }
+    
+    public void SelectObject(GameObject obj) { }
+    public void DeselectObject() { }
+    public void PerformAction() { }
 }

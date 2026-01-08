@@ -1,18 +1,21 @@
-using System.Collections;
+
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LineDataSO : MonoBehaviour
+[CreateAssetMenu(fileName = "Line", menuName = "Metro/Line")]
+public class LineDataSO : ScriptableObject
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [Header("Identification")]
+    public string lineId;
+    public string lineName;
+    
+    [Header("Visual")]
+    public Color lineColor;
+    
+    [Header("Route")]
+    public List<StationDataSO> stations;
+    
+    [Header("Trains")]
+    public int defaultTrainCount = 2;
+    public float trainSpeed = 5f;
 }

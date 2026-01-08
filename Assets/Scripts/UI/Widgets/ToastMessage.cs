@@ -1,18 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using System.Collections;
 
 public class ToastMessage : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    public TextMeshProUGUI messageText;
+    public Image background;
+    public float displayDuration = 2f;
+    
+    public void Show(string message, Color color) 
     {
-        
+        messageText.text = message;
+        background.color = color;
+        StartCoroutine(FadeOut());
     }
-
-    // Update is called once per frame
-    void Update()
+    
+    private IEnumerator FadeOut() 
     {
-        
+        yield return new WaitForSeconds(displayDuration);
+        Destroy(gameObject);
     }
 }

@@ -4,15 +4,26 @@ using UnityEngine;
 
 public class RaycastSelector : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [Header("Settings")]
+    public float maxRayDistance = 100f;
+    public LayerMask selectableLayer;
+    
+    [Header("Visual Feedback")]
+    public GameObject selectionHighlight;
+    public Color highlightColor = Color.cyan;
+    
+    public GameObject GetObjectUnderMouse()
     {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
         
+        if (Physics.Raycast(ray, out hit, maxRayDistance, selectableLayer))
+        {
+            return hit.collider.gameObject;
+        }
+        return null;
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    
+    public void ShowHighlight(GameObject target) { }
+    public void HideHighlight() { }
 }

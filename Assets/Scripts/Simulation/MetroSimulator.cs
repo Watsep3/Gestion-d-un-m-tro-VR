@@ -4,15 +4,22 @@ using UnityEngine;
 
 public class MetroSimulator : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [Header("Settings")]
+    public float incidentInterval = 30f; // secondes
+    public float incidentChance = 0.3f;
+    
+    private float timer = 0f;
+    
+    public void UpdateSimulation(float deltaTime) 
     {
-        
+        timer += deltaTime;
+        if (timer >= incidentInterval)
+        {
+            TryGenerateIncident();
+            timer = 0f;
+        }
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    
+    private void TryGenerateIncident() { }
+    public void GenerateRandomIncident() { }
 }
