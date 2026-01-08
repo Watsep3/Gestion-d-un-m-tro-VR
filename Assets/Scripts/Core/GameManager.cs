@@ -142,6 +142,7 @@ public class GameManager : MonoBehaviour
                     position = stationConfig.worldPosition,
                     status = StationStatus.Normal,
                     passengerCount = 0,
+                    maxPassengers = stationConfig.maxPassengers, // ← AJOUTÉ ICI
                     connectedStations = new List<string>()
                 };
                 

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro; 
+using TMPro;
 
 public class StationController : MonoBehaviour, IInteractable
 {
@@ -19,10 +19,82 @@ public class StationController : MonoBehaviour, IInteractable
     public Color delayedColor = Color.yellow;
     public Color brokenColor = Color.red;
     
-    public void Initialize(StationData stationData) { }
-    public void UpdateVisuals() { }
-    public void SetStatus(StationStatus newStatus) { }
-    public void OnStationClicked() { }
+    /// <summary>
+    /// Initialise la station avec ses données
+    /// </summary>
+    public void Initialize(StationData stationData)
+    {
+        // Sauvegarder les données
+        data = stationData;
+        stationId = stationData.stationId;
+        
+        Debug.Log($"📍 Initializing station: {stationData.stationName}");
+        Debug.Log($"   → ID: {stationData.stationId}");
+        Debug.Log($"   → Position: {stationData.position}");
+        Debug.Log($"   → Max Passengers: {stationData.maxPassengers}");
+        
+        // Configurer le label
+        if (stationLabel != null)
+        {
+            stationLabel.text = stationData.stationName;
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ Station {stationData.stationName}: stationLabel is null!");
+        }
+        
+        // Mettre à jour l'apparence
+        UpdateVisuals();
+        
+        Debug.Log($"✅ Station {stationData.stationName} initialized");
+    }
+    
+    /// <summary>
+    /// Met à jour l'apparence visuelle selon le status
+    /// </summary>
+    public void UpdateVisuals()
+    {
+        if (statusRenderer == null)
+        {
+            Debug.LogWarning($"⚠️ Station {data.stationName}: statusRenderer is null!");
+            return;
+        }
+        
+        // Changer la couleur selon le status
+        switch (data.status)
+        {
+            case StationStatus.Normal:
+                statusRenderer.material.color = normalColor;
+                break;
+            case StationStatus.Delayed:
+                statusRenderer.material.color = delayedColor;
+                break;
+            case StationStatus.Broken:
+                statusRenderer.material.color = brokenColor;
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Change le status de la station
+    /// </summary>
+    public void SetStatus(StationStatus newStatus)
+    {
+        data.status = newStatus;
+        UpdateVisuals();
+        
+        Debug.Log($"🔄 {data.stationName} status changed to: {newStatus}");
+    }
+    
+    /// <summary>
+    /// Appelé quand on clique sur la station (legacy)
+    /// </summary>
+    public void OnStationClicked()
+    {
+        Debug.Log($"Station clicked: {data.stationName}");
+        OnSelected();
+    }
+    
     // ========================================
     // INTERFACE IINTERACTABLE
     // ========================================
@@ -37,9 +109,10 @@ public class StationController : MonoBehaviour, IInteractable
         // Afficher les infos dans la console
         Debug.Log($"   - État: {data.status}");
         Debug.Log($"   - Passagers: {data.passengerCount}/{data.maxPassengers}");
+        Debug.Log($"   - Position: {data.position}");
         
         // TODO: Plus tard, Personne 3 (UI) utilisera ça pour ouvrir le panel
-        // UIManager uiManager = FindObjectOfType<UIManager>();
+        // UIManager uiManager = GameManager.Instance.uiManager;
         // if (uiManager != null)
         // {
         //     uiManager.ShowStationPanel(data);
@@ -67,7 +140,7 @@ public class StationController : MonoBehaviour, IInteractable
         }
         else
         {
-            Debug.Log($"{data.stationName} n'a pas besoin de réparation");
+            Debug.Log($"ℹ️ {data.stationName} n'a pas besoin de réparation (état: {data.status})");
         }
     }
     
@@ -76,6 +149,6 @@ public class StationController : MonoBehaviour, IInteractable
     /// </summary>
     public string GetInteractionInfo()
     {
-        return $"{data.stationName} - {data.passengerCount} passagers - État: {data.status}";
+        return $"{data.stationName} - {data.passengerCount}/{data.maxPassengers} passagers - État: {data.status}";
     }
 }
