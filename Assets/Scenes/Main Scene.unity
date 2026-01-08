@@ -417,7 +417,8 @@ GameObject:
   - component: {fileID: 1608059187}
   - component: {fileID: 1608059186}
   - component: {fileID: 1608059185}
-  m_Layer: 0
+  - component: {fileID: 1608059190}
+  m_Layer: 8
   m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -464,7 +465,7 @@ MonoBehaviour:
   currentSelection: {fileID: 0}
   interactableLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   selectKey: 323
   actionKey: 101
 --- !u!114 &1608059187
@@ -533,6 +534,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1608059190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608059184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cf49bbc5d6e2b349bca6be21517989b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxRayDistance: 100
+  selectableLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  highlightMaterial: {fileID: 0}
+  highlightColor: {r: 0, g: 1, b: 1, a: 1}
 --- !u!1 &1655648850
 GameObject:
   m_ObjectHideFlags: 0
