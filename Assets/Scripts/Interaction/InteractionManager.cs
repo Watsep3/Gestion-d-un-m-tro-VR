@@ -14,7 +14,7 @@ public class InteractionManager : MonoBehaviour
     public GameObject currentSelection;
     
     [Tooltip("Layer des objets cliquables")]
-    public LayerMask interactableLayer;
+    public LayerMask interactableLayer = -1; // -1 = tous les layers
     
     [Header("Input")]
     [Tooltip("Touche pour sélectionner (clic gauche)")]
@@ -23,13 +23,20 @@ public class InteractionManager : MonoBehaviour
     [Tooltip("Touche pour action spéciale")]
     public KeyCode actionKey = KeyCode.E;
     
+    [Header("Raycast Settings")]
+    [Tooltip("Distance maximale du raycast")]
+    public float maxRayDistance = 1000f;
+    
     // Référence au RaycastSelector
     private RaycastSelector raycastSelector;
     
     void Start()
     {
         // Forcer l'assignation de la caméra
-        mainCamera = Camera.main;
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+        }
         
         // Si Camera.main ne marche pas, chercher par nom
         if (mainCamera == null)
@@ -41,13 +48,19 @@ public class InteractionManager : MonoBehaviour
             }
         }
         
+        // Dernier recours : chercher n'importe quelle caméra
         if (mainCamera == null)
         {
-            Debug.LogError("InteractionManager: Pas de caméra trouvée!");
+            mainCamera = FindObjectOfType<Camera>();
+        }
+        
+        if (mainCamera == null)
+        {
+            Debug.LogError("❌ InteractionManager: Pas de caméra trouvée!");
         }
         else
         {
-            Debug.Log($"InteractionManager: Caméra trouvée ✅ ({mainCamera.name})");
+            Debug.Log($"✅ InteractionManager: Caméra trouvée ({mainCamera.name})");
         }
         
         // Récupérer le RaycastSelector sur le même GameObject
@@ -55,16 +68,25 @@ public class InteractionManager : MonoBehaviour
         
         if (raycastSelector == null)
         {
-            Debug.LogError("InteractionManager: RaycastSelector manquant! Ajoute-le sur GameManager.");
+            Debug.LogWarning("⚠️ InteractionManager: RaycastSelector manquant! Ajout automatique...");
+            raycastSelector = gameObject.AddComponent<RaycastSelector>();
         }
-        else
-        {
-            Debug.Log("InteractionManager: RaycastSelector trouvé ✅");
-        }
+        
+        Debug.Log("✅ InteractionManager: Initialisé avec succès");
     }
     
     void Update()
     {
+        // Ne pas gérer les interactions si le jeu est en pause ou en Game Over
+        if (GameManager.Instance != null)
+        {
+            if (GameManager.Instance.currentState == AppState.GameOver)
+            {
+                return;
+            }
+            // Les interactions restent actives même en pause
+        }
+        
         // Appeler HandleInput chaque frame
         HandleInput();
     }
@@ -85,6 +107,12 @@ public class InteractionManager : MonoBehaviour
         {
             PerformAction();
         }
+        
+        // ESC = désélectionner
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            DeselectObject();
+        }
     }
     
     /// <summary>
@@ -92,31 +120,47 @@ public class InteractionManager : MonoBehaviour
     /// </summary>
     private void HandleSelection()
     {
-        if (raycastSelector == null)
+        if (mainCamera == null)
         {
-            Debug.LogWarning("RaycastSelector manquant!");
+            Debug.LogError("❌ HandleSelection: Caméra manquante!");
             return;
         }
         
-        // Détecter l'objet sous la souris
-        GameObject clickedObject = raycastSelector.GetObjectUnderMouse();
+        // Créer un rayon depuis la caméra vers la position de la souris
+        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
         
-        if (clickedObject != null)
+        // Debug visuel du rayon
+        Debug.DrawRay(ray.origin, ray.direction * maxRayDistance, Color.yellow, 0.5f);
+        
+        // Lancer le raycast
+        if (Physics.Raycast(ray, out hit, maxRayDistance, interactableLayer))
         {
-            Debug.Log($"🖱️ Clic détecté sur: {clickedObject.name}");
+            GameObject clickedObject = hit.collider.gameObject;
+            Debug.Log($"🖱️ Clic détecté sur: {clickedObject.name} (Layer: {LayerMask.LayerToName(clickedObject.layer)})");
             
             // Vérifier si l'objet est interactable
             IInteractable interactable = clickedObject.GetComponent<IInteractable>();
             
+            // Si pas trouvé directement, chercher dans le parent
+            if (interactable == null)
+            {
+                interactable = clickedObject.GetComponentInParent<IInteractable>();
+            }
+            
             if (interactable != null)
             {
                 Debug.Log($"✅ {clickedObject.name} est interactable!");
-                // Sélectionner cet objet
-                SelectObject(clickedObject);
+                // Sélectionner cet objet (ou son parent avec l'interface)
+                MonoBehaviour interactableMB = interactable as MonoBehaviour;
+if (interactableMB != null)
+{
+    SelectObject(interactableMB.gameObject);
+}
             }
             else
             {
-                Debug.Log($"❌ {clickedObject.name} n'est pas interactable");
+                Debug.Log($"❌ {clickedObject.name} n'est pas interactable (pas d'interface IInteractable)");
                 // Clic sur quelque chose de non-interactable = désélectionner
                 DeselectObject();
             }
@@ -124,7 +168,7 @@ public class InteractionManager : MonoBehaviour
         else
         {
             // Clic dans le vide = désélectionner
-            Debug.Log("🖱️ Clic dans le vide");
+            Debug.Log("🖱️ Clic dans le vide (aucun collider touché)");
             DeselectObject();
         }
     }
@@ -134,7 +178,11 @@ public class InteractionManager : MonoBehaviour
     /// </summary>
     public void SelectObject(GameObject obj)
     {
-        if (obj == null) return;
+        if (obj == null)
+        {
+            Debug.LogWarning("⚠️ SelectObject: objet null!");
+            return;
+        }
         
         // Si on a déjà quelque chose de sélectionné et que c'est différent
         if (currentSelection != null && currentSelection != obj)
@@ -157,6 +205,13 @@ public class InteractionManager : MonoBehaviour
         if (interactable != null)
         {
             interactable.OnSelected();
+            
+            // Afficher les infos dans la console
+            string info = interactable.GetInteractionInfo();
+            if (!string.IsNullOrEmpty(info))
+            {
+                Debug.Log($"ℹ️ {info}");
+            }
         }
         
         // Afficher la surbrillance
@@ -208,10 +263,30 @@ public class InteractionManager : MonoBehaviour
             {
                 interactable.OnAction();
             }
+            else
+            {
+                Debug.LogWarning($"⚠️ {currentSelection.name} n'a pas d'interface IInteractable");
+            }
         }
         else
         {
             Debug.Log("⚠️ Aucun objet sélectionné pour effectuer une action");
         }
+    }
+    
+    /// <summary>
+    /// Retourne l'objet actuellement sélectionné
+    /// </summary>
+    public GameObject GetCurrentSelection()
+    {
+        return currentSelection;
+    }
+    
+    /// <summary>
+    /// Vérifie si un objet est sélectionné
+    /// </summary>
+    public bool HasSelection()
+    {
+        return currentSelection != null;
     }
 }

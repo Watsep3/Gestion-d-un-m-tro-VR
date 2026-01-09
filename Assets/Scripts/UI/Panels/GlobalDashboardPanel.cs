@@ -23,6 +23,15 @@ public class GlobalDashboardPanel : MonoBehaviour
     public Color warningColor = Color.yellow;
     public Color dangerColor = Color.red;
     
+    void Update()
+    {
+        // Mise à jour automatique chaque frame si le jeu est en cours
+        if (GameManager.Instance != null && GameManager.Instance.currentState == AppState.Running)
+        {
+            UpdateDisplay();
+        }
+    }
+    
     /// <summary>
     /// Met à jour l'affichage avec les données actuelles
     /// </summary>
@@ -34,7 +43,7 @@ public class GlobalDashboardPanel : MonoBehaviour
             return;
         }
         
-        // Récupérer les données depuis GameManager
+        // Récupérer les données à jour depuis GameManager
         int totalPassengers = GameManager.Instance.totalPassengers;
         int delayCount = GameManager.Instance.delayCount;
         float gameTime = GameManager.Instance.gameTime;

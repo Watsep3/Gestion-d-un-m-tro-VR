@@ -79,9 +79,16 @@ public class StationPanel : MonoBehaviour
     /// <summary>
     /// Met à jour l'affichage avec les données actuelles
     /// </summary>
-    private void UpdateDisplay()
+    public void UpdateDisplay()
     {
         if (currentStation == null) return;
+        
+        // Récupérer les données à jour depuis le StationController
+        StationController controller = FindStationController(currentStation.stationId);
+        if (controller != null && controller.data != null)
+        {
+            currentStation = controller.data; // ✅ Utiliser directement la propriété 'data'
+        }
         
         // Nom de la station
         if (stationNameText != null)

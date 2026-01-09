@@ -32,12 +32,16 @@ public class GameManager : MonoBehaviour
     public int maxDelayThreshold = 5;
     public int maxPassengerThreshold = 2000;
     
+    // Propriété pour vérifier si le jeu est en pause
+    public bool IsPaused => currentState == AppState.Paused;
+    
     private void Awake() 
     { 
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // ⚠️ Commenté pour le développement - décommenter si vous avez plusieurs scènes
+            // DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -52,15 +56,25 @@ public class GameManager : MonoBehaviour
     
     private void Update() 
     { 
+        // ⏸️ Les interactions restent actives même en pause
+        // Seuls les mécanismes de jeu sont arrêtés
+        
         if (currentState == AppState.Running)
         {
             gameTime += Time.deltaTime;
             
-            // Vérifications de fin de jeu
-            CheckGameOverConditions();
-            
             // Update UI dashboard
             UpdateGameMetrics();
+
+
+            // Vérifications de fin de jeu
+            CheckGameOverConditions();
+        }
+        
+        // 🎮 Raccourci clavier pour pause/resume
+        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
+        {
+            TogglePause();
         }
     }
     
@@ -142,7 +156,7 @@ public class GameManager : MonoBehaviour
                     position = stationConfig.worldPosition,
                     status = StationStatus.Normal,
                     passengerCount = 0,
-                    maxPassengers = stationConfig.maxPassengers, // ← AJOUTÉ ICI
+                    maxPassengers = stationConfig.maxPassengers,
                     connectedStations = new List<string>()
                 };
                 
@@ -258,29 +272,74 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    // Mettre à jour les métriques du jeu
-    private void UpdateGameMetrics()
+   /// <summary>
+/// Met à jour les métriques du jeu
+/// </summary>
+private void UpdateGameMetrics()
+{
+    if (metroSystem == null)
     {
-        // Calculer le total de passagers
-        totalPassengers = 0;
-        delayCount = 0;
+        Debug.LogError("❌ UpdateGameMetrics: metroSystem is NULL!");
+        return;
+    }
+    
+    if (metroSystem.stations == null)
+    {
+        Debug.LogError("❌ UpdateGameMetrics: metroSystem.stations is NULL!");
+        return;
+    }
+    
+    // Calculer le total de passagers dans les stations
+    int stationPassengers = 0;
+    int trainPassengers = 0;
+    delayCount = 0;
+    
+    // Compter les passagers dans les stations
+    foreach (var station in metroSystem.stations.Values)
+    {
+        stationPassengers += station.passengerCount;
         
-        foreach (var station in metroSystem.stations.Values)
+        if (station.status == StationStatus.Delayed || station.status == StationStatus.Broken)
         {
-            totalPassengers += station.passengerCount;
-            
-            if (station.status == StationStatus.Delayed || station.status == StationStatus.Broken)
-            {
-                delayCount++;
-            }
-        }
-        
-        // Update UI si disponible
-        if (uiManager != null)
-        {
-            uiManager.UpdateDashboard();
+            delayCount++;
         }
     }
+    
+    // Compter les passagers dans les trains
+    if (metroSystem.trains != null)
+    {
+        foreach (var train in metroSystem.trains.Values)
+        {
+            trainPassengers += train.currentPassengers;
+        }
+    }
+    
+    // Total = stations + trains
+    int previousTotal = totalPassengers;
+    totalPassengers = stationPassengers + trainPassengers;
+    
+    // Debug CHAQUE frame pour voir si ça change
+    if (totalPassengers != previousTotal)
+    {
+        Debug.Log($"📊 CHANGEMENT: {previousTotal} → {totalPassengers} passagers (Stations: {stationPassengers}, Trains: {trainPassengers})");
+    }
+    
+    // Debug périodique (toutes les 5 secondes)
+    if (Time.frameCount % 300 == 0)
+    {
+        Debug.Log($"📊 Métriques: {stationPassengers} passagers en station + {trainPassengers} en train = {totalPassengers} total | Retards: {delayCount} | Temps: {gameTime:F1}s");
+    }
+    
+    // ✅ FORCER la mise à jour du dashboard UI
+    if (uiManager != null)
+    {
+        uiManager.UpdateDashboard();
+    }
+    else
+    {
+        Debug.LogWarning("❌ UIManager is NULL!");
+    }
+}
     
     // Vérifier les conditions de Game Over
     private void CheckGameOverConditions()
@@ -312,8 +371,9 @@ public class GameManager : MonoBehaviour
     
     public void ChangeState(AppState newState) 
     { 
+        AppState previousState = currentState;
         currentState = newState;
-        Debug.Log($"State changed to: {newState}");
+        Debug.Log($"State changed from {previousState} to: {newState}");
         
         if (newState == AppState.GameOver)
         {
@@ -321,16 +381,47 @@ public class GameManager : MonoBehaviour
         }
     }
     
+    // 🆕 Toggle entre pause et running
+    public void TogglePause()
+    {
+        if (currentState == AppState.Paused)
+        {
+            ResumeGame();
+        }
+        else if (currentState == AppState.Running)
+        {
+            PauseGame();
+        }
+    }
+    
     public void PauseGame() 
     {
+        if (currentState != AppState.Running) return;
+        
         ChangeState(AppState.Paused);
-        Time.timeScale = 0f;
+        // ⚠️ NE PAS utiliser Time.timeScale = 0 pour permettre les interactions
+        // Les scripts vont vérifier GameManager.Instance.IsPaused à la place
+        
+        Debug.Log("⏸️ Game Paused - Interactions still enabled");
+        
+        if (uiManager != null)
+        {
+            // uiManager.ShowPauseMenu();
+        }
     }
     
     public void ResumeGame() 
     {
+        if (currentState != AppState.Paused) return;
+        
         ChangeState(AppState.Running);
-        Time.timeScale = 1f;
+        
+        Debug.Log("▶️ Game Resumed");
+        
+        if (uiManager != null)
+        {
+            // uiManager.HidePauseMenu();
+        }
     }
     
     private void GameOver()

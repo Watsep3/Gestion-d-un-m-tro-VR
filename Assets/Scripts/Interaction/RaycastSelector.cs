@@ -8,22 +8,32 @@ public class RaycastSelector : MonoBehaviour
 {
     [Header("Settings")]
     [Tooltip("Distance maximale du raycast")]
-    public float maxRayDistance = 100f;
+    public float maxRayDistance = 1000f;
     
-    [Tooltip("Layer des objets sélectionnables")]
-    public LayerMask selectableLayer;
+    [Tooltip("Layer des objets sélectionnables (-1 = tous)")]
+    public LayerMask selectableLayer = -1;
     
     [Header("Visual Feedback")]
-    [Tooltip("Material de surbrillance (jaune/cyan)")]
-    public Material highlightMaterial;
-    
     [Tooltip("Couleur de surbrillance")]
-    public Color highlightColor = Color.cyan;
+    public Color highlightColor = Color.yellow;
+    
+    [Tooltip("Intensité de l'émission (glow)")]
+    [Range(0f, 2f)]
+    public float emissionIntensity = 0.5f;
+    
+    [Header("Outline Settings")]
+    [Tooltip("Utiliser un outline au lieu de changer la couleur")]
+    public bool useOutline = false;
+    
+    [Tooltip("Épaisseur de l'outline")]
+    public float outlineWidth = 0.1f;
     
     // Variables privées
     private Camera mainCamera;
     private GameObject currentHighlightedObject;
-    private Material originalMaterial;
+    private Color originalColor;
+    private Renderer currentRenderer;
+    private Material currentMaterial; // ⚠️ On garde une référence au material modifié
     
     void Start()
     {
@@ -32,7 +42,16 @@ public class RaycastSelector : MonoBehaviour
         
         if (mainCamera == null)
         {
-            Debug.LogError("RaycastSelector: Pas de caméra principale trouvée!");
+            mainCamera = FindObjectOfType<Camera>();
+        }
+        
+        if (mainCamera == null)
+        {
+            Debug.LogError("❌ RaycastSelector: Pas de caméra principale trouvée!");
+        }
+        else
+        {
+            Debug.Log($"✅ RaycastSelector: Caméra trouvée ({mainCamera.name})");
         }
     }
     
@@ -41,6 +60,12 @@ public class RaycastSelector : MonoBehaviour
     /// </summary>
     public GameObject GetObjectUnderMouse()
     {
+        if (mainCamera == null)
+        {
+            Debug.LogError("❌ GetObjectUnderMouse: Caméra manquante!");
+            return null;
+        }
+        
         // Créer un rayon depuis la caméra vers la position de la souris
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
@@ -67,7 +92,20 @@ public class RaycastSelector : MonoBehaviour
             HideHighlight();
         }
         
-        if (target == null) return;
+        if (target == null)
+        {
+            Debug.LogWarning("⚠️ ShowHighlight: target est null");
+            return;
+        }
+        
+        // ⚠️ Ne PAS appliquer de surbrillance sur les objets IInteractable
+        // Ils gèrent leur propre couleur de sélection
+        IInteractable interactable = target.GetComponent<IInteractable>();
+        if (interactable != null)
+        {
+            Debug.Log($"⏭️ {target.name} est IInteractable, pas de surbrillance RaycastSelector");
+            return;
+        }
         
         // Récupérer le Renderer de l'objet
         Renderer renderer = target.GetComponent<Renderer>();
@@ -80,24 +118,53 @@ public class RaycastSelector : MonoBehaviour
         
         if (renderer != null)
         {
-            // Sauvegarder le material original
-            originalMaterial = renderer.material;
+            currentRenderer = renderer;
+            currentMaterial = renderer.material; // On obtient le material actuel
             
-            // Créer un nouveau material avec la couleur de surbrillance
-            Material highlightMat = new Material(renderer.material);
-            highlightMat.color = highlightColor;
+            // ✅ Sauvegarder la couleur originale du material
+            originalColor = currentMaterial.color;
             
-            // Option: Ajouter un effet d'émission (glow)
-            highlightMat.EnableKeyword("_EMISSION");
-            highlightMat.SetColor("_EmissionColor", highlightColor * 0.5f);
-            
-            // Appliquer le material
-            renderer.material = highlightMat;
+            if (useOutline)
+            {
+                // TODO: Implémenter un système d'outline
+                // Pour l'instant, on utilise la méthode de couleur
+                ApplyColorHighlight();
+            }
+            else
+            {
+                ApplyColorHighlight();
+            }
             
             // Mémoriser l'objet surbrillancé
             currentHighlightedObject = target;
             
-            Debug.Log($"Surbrillance activée sur: {target.name}");
+            Debug.Log($"✨ Surbrillance activée sur: {target.name} (couleur originale: {originalColor})");
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ Pas de Renderer trouvé sur {target.name}");
+        }
+    }
+    
+    /// <summary>
+    /// Applique la surbrillance par changement de couleur
+    /// </summary>
+    private void ApplyColorHighlight()
+    {
+        if (currentMaterial == null)
+        {
+            Debug.LogWarning("⚠️ ApplyColorHighlight: currentMaterial est null!");
+            return;
+        }
+        
+        // ✅ Modifier directement le material existant (pas en créer un nouveau)
+        currentMaterial.color = highlightColor;
+        
+        // Ajouter un effet d'émission (glow) si le shader le supporte
+        if (currentMaterial.HasProperty("_EmissionColor"))
+        {
+            currentMaterial.EnableKeyword("_EMISSION");
+            currentMaterial.SetColor("_EmissionColor", highlightColor * emissionIntensity);
         }
     }
     
@@ -106,25 +173,66 @@ public class RaycastSelector : MonoBehaviour
     /// </summary>
     public void HideHighlight()
     {
-        if (currentHighlightedObject != null)
+        if (currentHighlightedObject != null && currentRenderer != null && currentMaterial != null)
         {
-            Renderer renderer = currentHighlightedObject.GetComponent<Renderer>();
+            // ✅ Restaurer la couleur originale
+            currentMaterial.color = originalColor;
             
-            if (renderer == null)
+            // Désactiver l'émission si elle était activée
+            if (currentMaterial.HasProperty("_EmissionColor"))
             {
-                renderer = currentHighlightedObject.GetComponentInChildren<Renderer>();
+                currentMaterial.DisableKeyword("_EMISSION");
+                currentMaterial.SetColor("_EmissionColor", Color.black);
             }
             
-            if (renderer != null && originalMaterial != null)
-            {
-                // Remettre le material original
-                renderer.material = originalMaterial;
-            }
-            
-            Debug.Log($"Surbrillance retirée de: {currentHighlightedObject.name}");
+            Debug.Log($"✨ Surbrillance retirée de: {currentHighlightedObject.name} (couleur restaurée: {originalColor})");
             
             currentHighlightedObject = null;
-            originalMaterial = null;
+            currentRenderer = null;
+            currentMaterial = null;
+        }
+    }
+    
+    /// <summary>
+    /// Vérifie si un objet est actuellement surbrillancé
+    /// </summary>
+    public bool IsHighlighted(GameObject obj)
+    {
+        return currentHighlightedObject == obj;
+    }
+    
+    /// <summary>
+    /// Retourne l'objet actuellement surbrillancé
+    /// </summary>
+    public GameObject GetHighlightedObject()
+    {
+        return currentHighlightedObject;
+    }
+    
+    /// <summary>
+    /// Change la couleur de surbrillance
+    /// </summary>
+    public void SetHighlightColor(Color newColor)
+    {
+        highlightColor = newColor;
+        
+        // Si un objet est déjà surbrillancé, réappliquer la nouvelle couleur
+        if (currentHighlightedObject != null && currentMaterial != null)
+        {
+            ApplyColorHighlight();
+        }
+    }
+    
+    /// <summary>
+    /// Dessine un rayon de debug dans la scène
+    /// </summary>
+    void OnDrawGizmos()
+    {
+        if (mainCamera != null && Application.isPlaying)
+        {
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(ray.origin, ray.direction * maxRayDistance);
         }
     }
 }
