@@ -105,18 +105,32 @@ public class StationController : MonoBehaviour, IInteractable
     public void OnSelected()
     {
         Debug.Log($"✅ Station {data.stationName} sélectionnée");
+
+            if (GameManager.Instance != null && GameManager.Instance.metroSystem != null)
+    {
+        StationData freshData = GameManager.Instance.metroSystem.GetStation(stationId);
+        if (freshData != null)
+        {
+            data = freshData; // Mettre à jour la référence locale
+        }
+    }
+    
         
         // Afficher les infos dans la console
         Debug.Log($"   - État: {data.status}");
         Debug.Log($"   - Passagers: {data.passengerCount}/{data.maxPassengers}");
         Debug.Log($"   - Position: {data.position}");
         
-        // TODO: Plus tard, Personne 3 (UI) utilisera ça pour ouvrir le panel
-        // UIManager uiManager = GameManager.Instance.uiManager;
-        // if (uiManager != null)
-        // {
-        //     uiManager.ShowStationPanel(data);
-        // }
+        // Ouvrir le panel UI
+        UIManager uiManager = GameManager.Instance.uiManager;
+        if (uiManager != null)
+        {
+            uiManager.ShowStationPanel(data);
+        }
+        else
+        {
+            Debug.LogWarning("UIManager not found!");
+        }
     }
     
     /// <summary>

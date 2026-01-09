@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4397193527416935510}
   - component: {fileID: 214346394448299579}
   - component: {fileID: 7614633914521584564}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Visual_Station
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 2455445865825941450}
   - component: {fileID: 8330007171522408356}
   - component: {fileID: 6511712152247188693}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Station_Prefab
   m_TagString: Station
   m_Icon: {fileID: 0}
@@ -177,7 +177,7 @@ GameObject:
   - component: {fileID: 2753089641956757843}
   - component: {fileID: 7590340498721894717}
   - component: {fileID: 6855223992728083992}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Label
   m_TagString: Untagged
   m_Icon: {fileID: 0}

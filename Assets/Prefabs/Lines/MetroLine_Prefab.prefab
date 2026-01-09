@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3522154020693068222}
   - component: {fileID: 5350089225273325386}
   - component: {fileID: 6085635147879118309}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: MetroLine_Prefab
   m_TagString: Line
   m_Icon: {fileID: 0}
