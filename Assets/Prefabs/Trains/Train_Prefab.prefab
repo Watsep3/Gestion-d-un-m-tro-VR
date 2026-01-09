@@ -138,7 +138,16 @@ MonoBehaviour:
     passengerCapacity: 200
     currentPassengers: 0
     speed: 5
-  currentTarget: {fileID: 0}
+  currentRoute: {fileID: 0}
   moveSpeed: 5
+  rotationSpeed: 5
+  stopDuration: 2
+  detectionDistance: 3
+  trainLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isBlockedByTrain: 0
+  currentTarget: {fileID: 0}
   isMoving: 0
+  isWaiting: 0
   trainRenderer: {fileID: 6705254223054377208}
